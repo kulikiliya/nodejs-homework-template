@@ -1,56 +1,36 @@
-const fs = require("fs/promises");
-const { nanoid } = require("nanoid");
-const path = require("path");
+const { Schema, model } = require("mongoose");
 
-const contactsPath = path.join(__dirname, "contacts.json");
+const contactSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Set name for contact"],
+    },
+    email: {
+      type: String,
+    },
+    phone: {
+      type: String,
+    },
+    favorite: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { versionKey: false, timestamps: true }
+);
 
-const listContacts = async () => {
-  const data = await fs.readFile(contactsPath);
-  return JSON.parse(data);
+const handleSaveErrors = (error, data, next) => {
+  const { name, code } = error;
+  console.log(name, code);
+  error.status = name === "MongoServerError" && code === 11000 ? 409 : 400;
+  next();
 };
 
-const getContactById = async (contactId) => {
-  const data = await listContacts();
-  const dataById = data.find((item) => item.id === contactId);
-  return dataById || null;
-};
+contactSchema.post("save", handleSaveErrors);
 
-const removeContact = async (contactId) => {
-  const data = await listContacts();
-  const index = data.findIndex((item) => item.id === contactId);
-
-  if (index === -1) return null;
-
-  const [result] = data.splice(index, 1);
-  await fs.writeFile(contactsPath, JSON.stringify(data, null, 2));
-  return result;
-};
-
-const addContact = async (body) => {
-  const data = await listContacts();
-  const { name, email, phone } = body;
-  const newContact = { id: nanoid(), name, email, phone };
-  data.push(newContact);
-  await fs.writeFile(contactsPath, JSON.stringify(data, null, 2));
-  console.log(newContact);
-  return newContact;
-};
-
-const updateContact = async (contactId, body) => {
-  const data = await listContacts();
-  const index = data.findIndex((item) => item.id === contactId);
-  if (index === -1) {
-    return null;
-  }
-  data[index] = { id: contactId, ...body };
-  await fs.writeFile(contactsPath, JSON.stringify(data, null, 2));
-  return data[index];
-};
+const Contact = model("contact", contactSchema);
 
 module.exports = {
-  listContacts,
-  getContactById,
-  removeContact,
-  addContact,
-  updateContact,
+  Contact,
 };
