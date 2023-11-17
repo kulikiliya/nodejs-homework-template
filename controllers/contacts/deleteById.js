@@ -1,14 +1,20 @@
+const { default: mongoose } = require("mongoose");
 const { RequestError } = require("../../helpers");
-const { removeContact } = require("../../models/contacts");
+const { Contact } = require("../../models/contacts");
 
 const deleteById = async (req, res) => {
-  console.log(req.params);
   const { contactId } = req.params;
-  const result = await removeContact(contactId);
+
+  if (!mongoose.Types.ObjectId.isValid(contactId)) {
+    throw RequestError(404);
+  }
+  const result = await Contact.findByIdAndDelete(contactId);
+  console.log(result);
+
   if (!result) {
     throw RequestError(404);
   }
-  res.json({
+  res.status(200).json({
     message: "Delete success",
   });
 };
