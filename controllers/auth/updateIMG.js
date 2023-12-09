@@ -3,7 +3,7 @@ const { User } = require("../../models/users");
 const fs = require("fs/promises");
 const path = require("path");
 const Jimp = require("jimp");
-const imgDir = path.join(__dirname, "../../public/avatars");
+const imgDir = path.resolve(__dirname, "../../public/avatars");
 
 const updateImg = async (req, res) => {
   // достаем нужную инфу
@@ -24,7 +24,7 @@ const updateImg = async (req, res) => {
   const extension = originalname.split(".").pop();
   const filename = `${_id}.${extension}`;
   // новый путь для нашего файла
-  const resultUpload = path.join(imgDir, filename);
+  const resultUpload = path.resolve(imgDir, filename);
   // перемещаем
   await fs.rename(tempUpload, resultUpload);
   const avatarURL = path.join("avatars", filename);
